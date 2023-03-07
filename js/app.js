@@ -1,80 +1,146 @@
-class BurgerGame extends Phaser.Scene
-{
-    constructor() {
-        super();
+class BurgerGame extends Phaser.Scene {
+  self;
+  bottomLineY = 705;
+  constructor() {
+    super();
+  }
+
+  getMaterialArray() {
+    return [
+      "bun",
+      "patty",
+      "tomato",
+      "lettuce",
+      "bacon",
+      "onion",
+      "cheese",
+      "pickle",
+      "ketchup",
+      "mayo",
+    ];
+  }
+
+  preload() {
+    this.load.image("wall", "assets/img/background.png");
+    var matList = this.getMaterialArray();
+    matList.forEach((m) => {
+      this.load.image(m, `assets/img/${m}.png`);
+      this.load.image(m + "-clicked", `assets/img/${m}-clicked.png`);
+      this.load.image(m + "-slice", `assets/img/${m}slice.png`);
+    });
+  }
+
+  create() {
+    self = this;
+
+    this.add.image(590, 410, "wall").setScale(0.5);
+
+    var matList = this.getMaterialArray();
+
+    var currentX = 780;
+    var currentY = 180;
+    var currentIndex = 1;
+    this.buttonObj = {};
+
+    this.sliceArray = [];
+
+    matList.forEach((m) => {
+      if (currentIndex == 1)
+        this.buttonObj[m] = this.add
+          .sprite(currentX, currentY, m)
+          .setScale(0.38)
+          .setData("name", m)
+          .setInteractive();
+      else if (currentIndex % 2 == 0) {
+        currentX += 245;
+        this.buttonObj[m] = this.add
+          .sprite(currentX, currentY, m)
+          .setScale(0.38)
+          .setData("name", m)
+          .setInteractive();
+      } else {
+        currentY += 120;
+        currentX -= 245;
+        this.buttonObj[m] = this.add
+          .sprite(currentX, currentY, m)
+          .setScale(0.38)
+          .setData("name", m)
+          .setInteractive();
+      }
+
+      this.buttonObj[m].on("pointerdown", this.onMatButtonClickHanler);
+      currentIndex++;
+    });
+  }
+
+  onMatButtonClickHanler() {
+    setTimeout(() => {
+      this.setTexture(this.getData("name"));
+    }, 100);
+    this.setTexture(this.getData("name") + "-clicked");
+
+    var sliceName = this.getData("name") + "-slice";
+
+    self.addSlice(sliceName);
+  }
+
+  addSlice(sliceName) {
+    if (this.sliceArray.length > 0) {
+      var topSlice = this.sliceArray[this.sliceArray.length - 1];
+      console.log(topSlice.getHeight());
+      this.sliceArray.push(new Slice(this, 315, 200, sliceName, this.bottomLineY - topSlice.getHeight()*0.3));
+      this.physics.world.enable(this.sliceArray);
+      this.bottomLineY -= topSlice.getHeight()*0.3;
+    } else {
+      this.sliceArray.push(new Slice(this, 315, 200, sliceName, this.bottomLineY));
+      this.physics.world.enable(this.sliceArray);
     }
+    
+  }
+}
 
-    getMaterialArray() {
-        return [
-            "bun",
-            "patty",
-            "tomato",
-            "lettuce",
-            "bacon",
-            "onion",
-            "cheese",
-            "pickle",
-            "ketchup",
-            "mayo"
-        ];
-    }
+class Slice extends Phaser.Physics.Arcade.Sprite {
+  constructor(scene, x, y, sliceName, bottomLineY) {
+    super(scene, x, y, sliceName);
 
-    preload() {
-        this.load.image('wall', 'assets/img/background.png');
-        // this.load.image('bun', 'assets/img/bun.png');
-        // this.load.image('bun-clicked', 'assets/img/bun-clicked.png');
-        // this.load.image('patty', 'assets/img/patty.png');
-        // this.load.image('patty-clicked', 'assets/img/patty-clicked.png');
+    scene.add.existing(this);
+    scene.physics.add.existing(this);
 
-        var matList = this.getMaterialArray();
-        matList.forEach(m => {
-            this.load.image(m, `assets/img/${m}.png`);
-            this.load.image(m + "-clicked", `assets/img/${m}-clicked.png`);
-        });
-    }
+    this.setScale(0.3);
+    this.setInteractive();
 
-    create() {
-        var bg = this.add.image(590, 410, 'wall').setScale(0.5);
+    this.setBounce(1, 0.2);
+    this.setCollideWorldBounds(true);
+    this.body.setBoundsRectangle(new Phaser.Geom.Rectangle(120, 0, 400, bottomLineY));
 
-        var matList = this.getMaterialArray();
+    this.body.onWorldBounds = true;
 
-        var currentX = 780;
-        var currentY = 180;
-        var currentIndex = 1;
-        this.buttonObj = {};
+    this.setVelocity(0, 500);
 
-        matList.forEach(m => {
-            if (currentIndex == 1)
-                this.buttonObj[m] = this.add.sprite(currentX, currentY, m).setScale(0.38).setInteractive();
-            else if (currentIndex % 2 == 0) {
-                currentX += 245;
-                this.buttonObj[m] = this.add.sprite(currentX, currentY, m).setScale(0.38).setInteractive();
-            } else {
-                currentY += 120;
-                currentX -= 245;
-                this.buttonObj[m] = this.add.sprite(currentX, currentY, m).setScale(0.38).setInteractive();;
-            }
-            
+    // scene.add.graphics()
+    //     .lineStyle(5, 0x00ffff, 0.5)
+    //     .strokeRectShape(this.body.customBoundsRectangle);
+  
+  }
 
-            this.buttonObj[m].on('pointerdown', this.onMatButtonClickHanler);
-
-            currentIndex++;
-        });
-       
-    }
-
-    onMatButtonClickHanler(e) {
-        // console.log(e);
-        console.log(this.buttonObj);
-    }
+  getHeight() {
+    return this.height;
+  }
 }
 
 const config = {
-    type: Phaser.AUTO,
-    parent: 'phaser-example',
-    width: 1180,
-    height: 820,
-    scene: [ BurgerGame ]
+  type: Phaser.AUTO,
+  parent: "phaser-example",
+  width: 1180,
+  height: 820,
+  scene: [BurgerGame],
+  physics: {
+    default: "arcade",
+    arcade: {
+      gravity: { y: 300 },
+      debug: false,
+    },
+  },
 };
 
 const game = new Phaser.Game(config);

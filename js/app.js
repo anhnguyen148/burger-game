@@ -102,6 +102,10 @@ class BurgerGame extends Phaser.Scene {
             s.destroy();
         });
         self.sliceArray = [];
+
+        self.bottomLineY = 715;
+        this.visible = false;
+
         console.log(self.sliceArray);
     }
 
